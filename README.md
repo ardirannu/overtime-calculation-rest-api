@@ -1,64 +1,127 @@
+
+# Overtime Calculation System - REST-API
+
+There are 2 methods of calculating overtime used.
+
+- Salary / 173 {(salary / 173) * overtime_duration_total)
+- Fixed (10000 * overtime_duration_total)
+
+If the first method is used, then all overtime wages from existing employees will be calculated using that method. Likewise if the chosen method is the second.
+
+Especially for employees on a probationary period, overtime pay is calculated when the overtime duration is more than 1 hour. When more than 1 hour, what is counted is the duration after that 1 hour. However, it will not be counted if the duration after 1 hour has not reached 1 hour, this rule applies to multiples. Overtime duration for employees in this probationary period is calculated on each overtime performed, not from the accumulated overtime per month.
+
+An example of the results of calculating employee overtime during a probationary period is as follows.
+- 2 hours overtime, then get 1 hour overtime pay
+- 2.5 hours overtime, then get 1 hour overtime pay
+- 1.5 hours overtime, so you don't get overtime pay
+- 3.9 hours of overtime, then you get 2 hours of overtime pay
+
+## API Reference
+
+#### Change Settings data.
+
+```http
+  PATCH /settings
+```
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `key` | `string` | **Can only be filled '`overtime_method`'** |
+| `value` | `string` | **Can only be filled by the value of `references`.`id` with criteria `code` = `overtime_method`** |
+
+#### Creating Employee Data
+
+```http
+  POST /employees
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `name`      | `string` `unique` | **Required**. Name of Employee |
+| `status_id` | `integer` | **According to the one in `references`.`id` with criteria `code` = `employee_status`** |
+| `salary` | `integer` `min:2000000` `max:10000000` | **Required**. Salary of Employee |
+
+#### Display all Employees data with pagination format (default 10)
+
+```http
+  GET /employees_per_page
+```
+
+#### Display Employees data with pagination format (page 1)
+
+```http
+  GET /employees_page
+```
+
+#### Display all Employees data with pagination format (Order By Name ASC)
+
+```http
+  GET /employees_order_by_name_asc
+```
+
+#### Display all Employees data with pagination format (Order By Name DESC)
+
+```http
+  GET /employees_order_by_name_desc
+```
+
+#### Display all Employees data with pagination format (Order By Salary ASC)
+
+```http
+  GET /employees_order_by_salary_asc
+```
+
+#### Display all Employees data with pagination format (Order By Salary DESC)
+
+```http
+  GET /employees_order_by_salary_desc
+```
+
+#### Creating Overtime Data
+
+```http
+  POST /overtimes
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `employee_id` | `integer` | **According to the one in `employees`.`id`** |
+| `date` | `date` `unique` | **Required** Date of employee doing overtime|
+| `time_started` | `time` `date_format:H:i` `before:time_ended` | **Required**. Start time employees do overtime |
+| `time_ended` | `time` `date_format:H:i` `after:time_started` | **Required**. Ended time employees do overtime |
+
+
+#### Displays Overtimes data based on the specified time range
+
+```http
+  GET /overtimes
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `date_started` | `date` `before:date_ended` | **Required**. Start time range |
+| `date_ended` | `date` `after:date_started` | **Required**. Ended time range |
+
+
+#### Displays the calculation results of the Overtimes that exist for each Employee, based on the specified month
+
+```http
+  GET /overtime-pays/calculate
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `month` | `date` `date_format:Y-m` | **Required**. Spesific Month |
+
+
+## Tech Stack
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Server:** Laravel 8
 
-## About Laravel
+**Database:** MySQL
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Authors
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- [@ardirannu](https://www.github.com/ardirannu)
